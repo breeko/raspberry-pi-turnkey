@@ -34,6 +34,19 @@ rsn_pairwise=CCMP' | sudo tee --append /etc/hostapd/hostapd.conf
 
 echo 'DAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee --append /etc/default/hostapd
 
+sudo systemctl unmask hostapd.service
 sudo systemctl start hostapd && sudo systemctl start dnsmasq
 
 sudo adduser $USERNAME sudo
+
+# sudo visudo
+# pi      ALL=(ALL:ALL) ALL
+
+# sudo nano /etc/rc.local
+# su pi -c '/usr/bin/sudo /usr/bin/python3 /home/pi/raspberry-pi-turnkey/startup.py &'
+
+# SSH over USB
+# https://desertbot.io/blog/ssh-into-pi-zero-over-usb
+
+# Share internet over USB
+# https://solarianprogrammer.com/2018/12/07/raspberry-pi-zero-internet-usb/

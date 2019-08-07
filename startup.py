@@ -1,13 +1,15 @@
 import subprocess
 import signal
-import string
-import random
 import re
 import json
 import time
 import os
 import socket
 import requests
+from utils import get_ssids
+from config import NAME
+
+from utils import is_connected
 
 from flask import Flask, request, send_from_directory, jsonify, render_template, redirect
 app = Flask(__name__, static_url_path='')
@@ -15,28 +17,11 @@ app = Flask(__name__, static_url_path='')
 currentdir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentdir)
 
-ssid_list = []
-def getssid():
-    global ssid_list
-    if len(ssid_list) > 0:
-        return ssid_list
-    ssid_list = []
-    get_ssid_list = subprocess.check_output(('iw', 'dev', 'wlan0', 'scan', 'ap-force'))
-    ssids = get_ssid_list.splitlines()
-    for s in ssids:
-        s = s.strip().decode('utf-8')
-        if s.startswith("SSID"):
-            a = s.split(": ")
-            try:
-                ssid_list.append(a[1])
-            except:
-                pass
-    print(ssid_list)
-    ssid_list = sorted(list(set(ssid_list)))
-    return ssid_list
+INITIAL_RUN = "initial_run"
+WPA_CONF_PATH = "/etc/wpa_supplicant/wpa_supplicant.conf"
 
-def id_generator(size=6, chars=string.ascii_lowercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
+INITIAL_SCRIPT = "./expand_filesystem.sh"
+STARTUP_SCRIPT = "./startup.sh"
 
 wpa_conf = """country=US
 ctrl_interface=DIR=/var/run/wpa_supplicant
@@ -51,12 +36,10 @@ ctrl_interface=DIR=/var/run/wpa_supplicant
 update_config=1
 """
 
-
-
 @app.route('/')
 def main():
-    piid = open('pi.id', 'r').read().strip()
-    return render_template('index.html', ssids=getssid(), message="Once connected you'll find IP address @ {}.".format(piid))
+    ssids = get_ssids()
+    return render_template('index.html', ssids=ssids, message="Configure your {} by providing network information below".format(NAME))
 
 # Captive portal when connected with iOS or Android
 @app.route('/generate_204')
@@ -142,7 +125,6 @@ def send_static(path):
 
 @app.route('/signin', methods=['POST'])
 def signin():
-    email = request.form['email']
     ssid = request.form['ssid']
     password = request.form['password']
 
@@ -150,7 +132,7 @@ def signin():
     if password == "":
         pwd = "key_mgmt=NONE" # If open AP
 
-    print(email, ssid, password)
+    print(ssid, password)
     valid_psk = check_cred(ssid, password)
     if not valid_psk:
         # User will not see this because they will be disconnected but we need to break here anyway
@@ -161,62 +143,39 @@ def signin():
     with open('status.json', 'w') as f:
         f.write(json.dumps({'status':'disconnected'}))
     subprocess.Popen(["./disable_ap.sh"])
-    piid = open('pi.id', 'r').read().strip()
     return render_template('index.html', message="Please wait 2 minutes to connect.")
 
-def wificonnected():
-    result = subprocess.check_output(['iwconfig', 'wlan0'])
-    matches = re.findall(r'\"(.+?)\"', result.split(b'\n')[0].decode('utf-8'))
-    if len(matches) > 0:
-        print("got connected to " + matches[0])
-        return True
-    return False
+def run_initial():
+    """ Runs on initial boot """
+    with open('pi.id', 'w') as f:
+        f.write(INITIAL_RUN)
+    subprocess.Popen(INITIAL_SCRIPT)
+    time.sleep(300)
+
+def is_initial_run() -> bool:
+    """ Returns True if it is an initial run """
+    return not os.path.isfile(INITIAL_RUN)
+
+def is_wpa_setup() -> bool:
+    """ Returns True if it is an initial run """
+    return not os.path.isfile(WPA_CONF_PATH)
+
+def setup_wpa_conf():
+    with open(WPA_CONF_PATH, 'w') as f:
+        f.write(wpa_conf_default)
 
 if __name__ == "__main__":
     # things to run the first time it boots
-    if not os.path.isfile('pi.id'):
-        with open('pi.id', 'w') as f:
-            f.write(id_generator())
-        subprocess.Popen("./expand_filesystem.sh")
-        time.sleep(300)
-    piid = open('pi.id', 'r').read().strip()
-    print(piid)
-    time.sleep(15)
-    # get status
-    s = {'status':'disconnected'}
-    if not os.path.isfile('status.json'):
-        with open('status.json', 'w') as f:
-            f.write(json.dumps(s))
-    else:
-        s = json.load(open('status.json'))
-
+    if is_initial_run():
+        run_initial()
+        time.sleep(15)
+    
+    if not is_wpa_setup():
+        setup_wpa_conf()
+    
     # check connection
-    if wificonnected():
-        s['status'] = 'connected'
-    if not wificonnected():
-        if s['status'] == 'connected': # Don't change if status in status.json is hostapd
-            s['status'] = 'disconnected'
-
-    with open('status.json', 'w') as f:
-        f.write(json.dumps(s))
-    if s['status'] == 'disconnected':
-        s['status'] = 'hostapd'
-        with open('status.json', 'w') as f:
-            f.write(json.dumps(s))
-        with open('wpa.conf', 'w') as f:
-            f.write(wpa_conf_default)
-        subprocess.Popen("./enable_ap.sh")
-    elif s['status'] == 'connected':
-        piid = open('pi.id', 'r').read().strip()
-
-        # get ip address
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ipaddress = s.getsockname()[0]
-        s.close()
-
-        subprocess.Popen("./startup.sh")
-        while True:
-            time.sleep(60000)
-    else:
+    if not is_connected():
+        # subprocess.Popen("./enable_ap.sh")
         app.run(host="0.0.0.0", port=80, threaded=True)
+    else:
+        subprocess.Popen(STARTUP_SCRIPT)
