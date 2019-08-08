@@ -17,10 +17,8 @@ app = Flask(__name__, static_url_path='')
 currentdir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(currentdir)
 
-INITIAL_RUN = "initial_run"
 WPA_CONF_PATH = "/etc/wpa_supplicant/wpa_supplicant.conf"
 
-INITIAL_SCRIPT = "./expand_filesystem.sh"
 STARTUP_SCRIPT = "./startup.sh"
 
 wpa_conf = """country=US
@@ -145,17 +143,6 @@ def signin():
     subprocess.Popen(["./disable_ap.sh"])
     return render_template('index.html', message="Please wait 2 minutes to connect.")
 
-def run_initial():
-    """ Runs on initial boot """
-    with open('pi.id', 'w') as f:
-        f.write(INITIAL_RUN)
-    subprocess.Popen(INITIAL_SCRIPT)
-    time.sleep(300)
-
-def is_initial_run() -> bool:
-    """ Returns True if it is an initial run """
-    return not os.path.isfile(INITIAL_RUN)
-
 def is_wpa_setup() -> bool:
     """ Returns True if it is an initial run """
     return not os.path.isfile(WPA_CONF_PATH)
@@ -166,9 +153,6 @@ def setup_wpa_conf():
 
 if __name__ == "__main__":
     # things to run the first time it boots
-    if is_initial_run():
-        run_initial()
-        time.sleep(15)
     
     if not is_wpa_setup():
         setup_wpa_conf()

@@ -1,10 +1,10 @@
 readonly WIFI=ConnectIOT
+readonly PASS=Connect
 readonly GIT_REPO=https://github.com/breeko/raspberry-pi-turnkey.git
-readonly USERNAME=pi
 
 sudo apt-get update
 sudo apt-get dist-upgrade -y
-sudo apt-get install -y dnsmasq hostapd vim python3-flask python3-requests git
+sudo apt-get install -y dnsmasq hostapd python3-flask python3-requests git
 git clone $GIT_REPO
 
 sudo systemctl stop dnsmasq && sudo systemctl stop hostapd
@@ -27,7 +27,7 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase=ConnectToConnect
+wpa_passphrase='$PASS'
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP' | sudo tee --append /etc/hostapd/hostapd.conf
@@ -37,8 +37,14 @@ echo 'DAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee --append /etc/default/
 sudo systemctl unmask hostapd.service
 sudo systemctl start hostapd && sudo systemctl start dnsmasq
 
-sudo adduser $USERNAME sudo
+#sudo echo "pi      ALL=(ALL:ALL) ALL" >> /etc/sudoers
+echo "pi      ALL=(ALL:ALL) ALL" | sudo tee --append /etc/sudoers
 
+echo "pi -c '/usr/bin/sudo /usr/bin/python3 /home/pi/raspberry-pi-turnkey/startup.py &'" | sudo tee --append /etc/rc.local
+
+sudo raspi-config --expand-rootfs
+
+sudo reboot now
 # sudo visudo
 # pi      ALL=(ALL:ALL) ALL
 
