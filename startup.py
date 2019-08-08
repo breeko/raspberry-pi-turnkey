@@ -64,7 +64,7 @@ def signin():
     
     if not valid_psk:
         # User will not see this because they will be disconnected but we need to break here anyway
-        return render_template('ap.html', message="Wrong password!")
+        return render_template('index.html', message="Wrong password!")
 
     with open(TEMP_WPA_CONF_PATH, 'a') as f:
         network = create_network(ssid = ssid, password = password)
