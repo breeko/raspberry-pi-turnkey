@@ -1,11 +1,14 @@
 import subprocess
 from typing import List
 import socket
+import time
+import os
+import signal
 
 REMOTE_SERVER = "www.google.com"
 
 def get_ssids() -> List[str]:
-    """ Returns the ssids """
+    """ Returns the available ssids """
     ssid_list = []
     get_ssid_list = subprocess.check_output(('iw', 'dev', 'wlan0', 'scan', 'ap-force'))
     ssids = get_ssid_list.splitlines()
@@ -20,7 +23,8 @@ def get_ssids() -> List[str]:
     ssid_list = sorted(list(set(ssid_list)))
     return ssid_list
 
-def is_connected():
+def is_connected() -> bool:
+  """ Returns True if connected to internet, else False """
   try:
     # see if we can resolve the host name -- tells us if there is a DNS listening
     host = socket.gethostbyname(REMOTE_SERVER)
@@ -31,3 +35,86 @@ def is_connected():
   except:
      pass
   return False
+
+def monitor_output(path:str, success: str, failure: str, timeout: float) -> bool:
+  """ Monitors the contents of a file looking for success or failure string.
+  Returns True if success found, False if failure found or timeout"""
+  start = time.time()
+  while True:
+    with open(path, "r") as f:
+      now = time.time()
+      out = f.read()
+      if success in out:
+        return True
+      elif failure in out:
+        return False
+      elif now - start > timeout:
+        return False
+
+def get_current_dir() -> str:
+  """ Returns current directory absolute path """
+  return os.path.dirname(os.path.abspath(__file__))
+
+def stop_ap(stop):
+  """ Stops wlan0 services """
+  if stop:
+      # Services need to be stopped to free up wlan0 interface
+      print(subprocess.check_output(['systemctl', "stop", "hostapd", "dnsmasq", "dhcpcd"]))
+  else:
+      print(subprocess.check_output(['systemctl', "restart", "dnsmasq", "dhcpcd"]))
+      time.sleep(15)
+      print(subprocess.check_output(['systemctl', "restart", "hostapd"]))
+
+def check_cred(ssid, password):
+  '''Validates ssid and password and returns True if valid and False if not valid'''
+
+  tmpdir = '/tmp/raspberry-pi-turnkey/'
+  testconf = os.path.join(tmpdir, 'test.conf')
+  wpalog = os.path.join(tmpdir, 'wpa.log')
+  wpapid = os.path.join(tmpdir, 'wpa.pid')
+
+  if not os.path.exists(tmpdir):
+      os.mkdir(tmpdir)
+
+  for _file in [testconf, wpalog, wpapid]:
+      if os.path.exists(_file):
+          os.remove(_file)
+
+  # Generate temp wpa.conf
+  result = subprocess.check_output(['wpa_passphrase', ssid, password])
+  with open(testconf, 'w') as f:
+      f.write(result.decode('utf-8'))
+
+  stop_ap(True)
+
+  result = subprocess.check_output(['wpa_supplicant',
+                                    "-Dnl80211",
+                                    "-iwlan0",
+                                    "-c/" + testconf,
+                                    "-f", wpalog,
+                                    "-B",
+                                    "-P", wpapid])
+
+  valid_psk = monitor_output(path=wpalog, success="CTRL-EVENT-CONNECTED", failure="CTRL-EVENT-ASSOC-REJECT", timeout=10)
+
+  # Kill wpa_supplicant to stop it from setting up dhcp, dns
+  with open(wpapid, 'r') as p:
+      pid = p.read()
+      pid = int(pid.strip())
+      os.kill(pid, signal.SIGTERM)
+
+  stop_ap(False) # Restart services
+  return valid_psk
+
+def create_network(ssid: str, password: str) -> str:
+  if password == "":
+    psk="key_mgmt=NONE"
+  else:
+    psk='psk="{}"'.format(password)
+  
+  network = """network={
+    ssid="{}"
+    {}
+  }""".format(ssid, psk)
+  
+  return network
