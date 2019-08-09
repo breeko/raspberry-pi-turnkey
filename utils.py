@@ -113,8 +113,8 @@ def create_network(ssid: str, password: str) -> str:
   if password == "":
     network = 'network={\n\tssid="' + ssid +'"\n\tkey_mgmt=NONE\n}'
   else:
-    network = subprocess.check_output(['wpa_passphrase', ssid, password])
-  
+    network = subprocess.check_output(['wpa_passphrase', ssid, password]).decode("utf-8")
+
   return network
 
 def create_static_ip(ip: str) -> str:
