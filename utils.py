@@ -62,7 +62,7 @@ def stop_ap(stop: bool) -> None:
       print(subprocess.check_output(['systemctl', "stop", "hostapd", "dnsmasq", "dhcpcd"]))
   else:
       print(subprocess.check_output(['systemctl', "restart", "dnsmasq", "dhcpcd"]))
-      # time.sleep(2)
+      time.sleep(2)
       print(subprocess.check_output(['systemctl', "restart", "hostapd"]))
 
 def check_cred(ssid: str, password: str) -> bool:

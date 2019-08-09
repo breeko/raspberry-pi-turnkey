@@ -86,8 +86,8 @@ if __name__ == "__main__":
 
     copy_wpa_conf()
 
-    # check connection
-    if not is_connected():
+    # TODO: Remove True
+    if True or not is_connected():
         app.run(host="0.0.0.0", port=80, threaded=True)
     else:
         subprocess.Popen(STARTUP_SCRIPT)
