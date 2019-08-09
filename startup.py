@@ -5,7 +5,7 @@ from utils import get_ssids, is_connected, check_cred, get_current_dir, create_n
 
 from shutil import copyfile
 
-from flask import Flask, request, send_from_directory, jsonify, render_template, redirect
+from flask import Flask, request, send_from_directory, jsonify, render_template, redirect, url_for
 app = Flask(__name__, static_url_path='')
 
 
@@ -31,27 +31,17 @@ update_config=1
 """
 
 @app.route('/')
-def main():
+def main(message=None):
     ssids = get_ssids()
-    return render_template('index.html', ssids=ssids, message="Configure your device by providing network information below")
+    message = message or "Configure your device by providing network information below"
+    return render_template('index.html', ssids=ssids, message=message)
 
 # Captive portal when connected with iOS or Android
 @app.route('/generate_204')
-def redirect204():
-    return redirect("http://192.168.4.1", code=302)
-
 @app.route('/hotspot-detect.html')
-def applecaptive():
-    return redirect("http://192.168.4.1", code=302)
-
-# Not working for Windows, needs work!
 @app.route('/ncsi.txt')
-def windowscaptive():
-    return redirect("http://192.168.4.1", code=302)
-
-@app.route('/static/<path:path>')
-def send_static(path):
-    return send_from_directory('static', path)
+def redirect204():
+    return redirect(url_for(main))
 
 @app.route('/signin', methods=['POST'])
 def signin():
@@ -91,10 +81,9 @@ def copy_wpa_conf():
 
 if __name__ == "__main__":
     # things to run the first time it boots
-    
     if not is_wpa_setup():
         setup_wpa_conf()
-    
+
     copy_wpa_conf()
 
     # check connection
