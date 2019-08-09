@@ -62,7 +62,7 @@ def stop_ap(stop):
       print(subprocess.check_output(['systemctl', "stop", "hostapd", "dnsmasq", "dhcpcd"]))
   else:
       print(subprocess.check_output(['systemctl', "restart", "dnsmasq", "dhcpcd"]))
-      time.sleep(15)
+      time.sleep(5)
       print(subprocess.check_output(['systemctl', "restart", "hostapd"]))
 
 def check_cred(ssid, password):
@@ -104,6 +104,7 @@ def check_cred(ssid, password):
       os.kill(pid, signal.SIGTERM)
 
   stop_ap(False) # Restart services
+  print("ssid: {} password: {} valid: {}".format(ssid, password, valid_psk))
   return valid_psk
 
 def create_network(ssid: str, password: str) -> str:
