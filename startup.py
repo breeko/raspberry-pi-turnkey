@@ -31,8 +31,8 @@ update_config=1
 """
 
 @app.route('/')
-def main():
-    message = "Configure your device by providing network information below"
+def main(message: str = None):
+    message = message or "Configure your device by providing network information below"
     ssids = get_ssids()
     return render_template('index.html', ssids=ssids, message=message)
 
@@ -58,7 +58,7 @@ def attempt_signin():
     valid_psk = check_cred(ssid, password)
     
     if not valid_psk:
-        return render_template('index.html', message="Wrong password!")
+        return main("Incorrect password.")
 
     with open(TEMP_WPA_CONF_PATH, 'a') as f:
         network = create_network(ssid = ssid, password = password)
@@ -66,7 +66,7 @@ def attempt_signin():
     
     copyfile(TEMP_WPA_CONF_PATH, WPA_CONF_PATH)
 
-    return render_template('index.html', message="Success! Click restart to connect.")
+    return main("Success! Click restart to connect.")
 
 def is_wpa_setup() -> bool:
     """ Returns True if it is an initial run """
