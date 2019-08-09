@@ -31,9 +31,9 @@ update_config=1
 """
 
 @app.route('/')
-def main(message=None):
+def main():
+    message = "Configure your device by providing network information below"
     ssids = get_ssids()
-    message = message or "Configure your device by providing network information below"
     return render_template('index.html', ssids=ssids, message=message)
 
 # Captive portal when connected with iOS or Android
@@ -43,7 +43,7 @@ def main(message=None):
 def redirect204():
     return redirect(url_for(main))
 
-@app.route('/signin', methods=['POST'])
+@app.route('/', methods=['POST'])
 def signin():
     button_clicked = request.form.get("submit")
     if button_clicked == "restart":
