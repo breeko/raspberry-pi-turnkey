@@ -1,10 +1,9 @@
 import subprocess
 
 import os
-from utils import get_ssids, is_connected, check_cred, get_current_dir, create_network
+from utils import get_ssids, is_connected, check_cred, get_current_dir, create_network, restart_device
 
 from shutil import copyfile
-from config import NAME
 
 from flask import Flask, request, send_from_directory, jsonify, render_template, redirect
 app = Flask(__name__, static_url_path='')
@@ -34,7 +33,7 @@ update_config=1
 @app.route('/')
 def main():
     ssids = get_ssids()
-    return render_template('index.html', ssids=ssids, message="Configure your {} by providing network information below".format(NAME))
+    return render_template('index.html', ssids=ssids, message="Configure your device by providing network information below")
 
 # Captive portal when connected with iOS or Android
 @app.route('/generate_204')
@@ -56,14 +55,19 @@ def send_static(path):
 
 @app.route('/signin', methods=['POST'])
 def signin():
+    button_clicked = request.form.get("submit")
+    if button_clicked == "restart":
+        return restart_device(disable=True)
+    elif button_clicked == "signin":
+        return attempt_signin()
+
+def attempt_signin():
     ssid = request.form['ssid']
     password = request.form['password']
 
-    print(ssid, password)
     valid_psk = check_cred(ssid, password)
     
     if not valid_psk:
-        # User will not see this because they will be disconnected but we need to break here anyway
         return render_template('index.html', message="Wrong password!")
 
     with open(TEMP_WPA_CONF_PATH, 'a') as f:
@@ -72,8 +76,7 @@ def signin():
     
     copyfile(TEMP_WPA_CONF_PATH, WPA_CONF_PATH)
 
-    subprocess.Popen(["./disable_ap.sh"])
-    return render_template('index.html', message="Please wait 2 minutes to connect.")
+    return render_template('index.html', message="Success! Click restart to connect.")
 
 def is_wpa_setup() -> bool:
     """ Returns True if it is an initial run """
@@ -96,7 +99,6 @@ if __name__ == "__main__":
 
     # check connection
     if not is_connected():
-        # subprocess.Popen("./enable_ap.sh")
         app.run(host="0.0.0.0", port=80, threaded=True)
     else:
         subprocess.Popen(STARTUP_SCRIPT)

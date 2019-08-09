@@ -55,18 +55,20 @@ def get_current_dir() -> str:
   """ Returns current directory absolute path """
   return os.path.dirname(os.path.abspath(__file__))
 
-def stop_ap(stop):
+def stop_ap(stop: bool) -> None:
   """ Stops wlan0 services """
   if stop:
       # Services need to be stopped to free up wlan0 interface
       print(subprocess.check_output(['systemctl', "stop", "hostapd", "dnsmasq", "dhcpcd"]))
   else:
       print(subprocess.check_output(['systemctl', "restart", "dnsmasq", "dhcpcd"]))
-      time.sleep(2)
+      # time.sleep(2)
       print(subprocess.check_output(['systemctl', "restart", "hostapd"]))
 
-def check_cred(ssid, password):
+def check_cred(ssid: str, password: str) -> bool:
   '''Validates ssid and password and returns True if valid and False if not valid'''
+  if len(password) < 8 or len(password) > 63:
+    return False
 
   tmpdir = '/tmp/raspberry-pi-turnkey/'
   testconf = os.path.join(tmpdir, 'test.conf')
@@ -109,10 +111,18 @@ def check_cred(ssid, password):
 
 def create_network(ssid: str, password: str) -> str:
   if password == "":
-    psk="key_mgmt=NONE"
+    network = 'network={\n\tssid="' + ssid +'"\n\tkey_mgmt=NONE\n}'
   else:
-    psk='psk="{}"'.format(password)
-  
-  network = 'network={\nssid="' + ssid +'"\n' + psk + '\n}'
+    network = subprocess.check_output(['wpa_passphrase', ssid, password])
   
   return network
+
+def create_static_ip(ip: str) -> str:
+  return 'interface wlan0\n\nstatic ip_address={}/24\nstatic routers=192.168.0.1\nstatic domain_name_servers=192.168.0.1'.format(ip)
+
+def restart_device(disable: bool) -> None:
+  if disable:
+    subprocess.Popen(["./disable_ap.sh"])
+  subprocess.run(["sudo", "restart", "now"])
+  
+# ip r | grep -Po '(?<=default via )[0-9]{3}.[0-9]{3}.[0-9]{1,3}.[0-9]{1,3}' | head -1

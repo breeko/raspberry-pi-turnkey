@@ -19,8 +19,6 @@
   <body>
     <form class="form-signin" action="/signin" method="POST">
       <div class="text-center mb-4">
-<!--         <img class="mb-4" src="https://getbootstrap.com/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">
- -->
        <h1 class="h3 mb-3 font-weight-normal">Sign in</h1>
         {% if message %}<p>{{ message|safe }}</p>{% endif %}
       </div>
@@ -36,10 +34,11 @@
       </div>
 
       <div class="form-label-group">
-        <input id="inputPassword" autocorrect="off" autocapitalize="none" pattern=".{0}|.{8,}" name="password" class="form-control" placeholder="SSID Password" required>
+        <input id="inputPassword" autocorrect="off" autocapitalize="none" pattern=".{0}|.{8,63}" name="password" class="form-control" placeholder="SSID Password" type="password" required>
         <label for="inputPassword">Password</label>
       </div>
 
-      <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+      <button class="btn btn-lg btn-primary btn-block" type="submit" name="submit" value="signin">Sign in</button>
+      {% if success % } <button class="btn btn-lg btn-primary btn-block" type="submit" name="submit" value="restart">Restart</button> {% endif % }
     </form>
   </body>
