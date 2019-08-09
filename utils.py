@@ -62,7 +62,7 @@ def stop_ap(stop):
       print(subprocess.check_output(['systemctl', "stop", "hostapd", "dnsmasq", "dhcpcd"]))
   else:
       print(subprocess.check_output(['systemctl', "restart", "dnsmasq", "dhcpcd"]))
-      time.sleep(5)
+      time.sleep(2)
       print(subprocess.check_output(['systemctl', "restart", "hostapd"]))
 
 def check_cred(ssid, password):
@@ -95,7 +95,7 @@ def check_cred(ssid, password):
                                     "-B",
                                     "-P", wpapid])
 
-  valid_psk = monitor_output(path=wpalog, success="CTRL-EVENT-CONNECTED", failure="CTRL-EVENT-ASSOC-REJECT", timeout=10)
+  valid_psk = monitor_output(path=wpalog, success="CTRL-EVENT-CONNECTED", failure="CTRL-EVENT-ASSOC-REJECT", timeout=5)
 
   # Kill wpa_supplicant to stop it from setting up dhcp, dns
   with open(wpapid, 'r') as p:
@@ -113,9 +113,6 @@ def create_network(ssid: str, password: str) -> str:
   else:
     psk='psk="{}"'.format(password)
   
-  network = """network={
-    ssid="{}"
-    {}
-  }""".format(ssid, psk)
+  network = 'network={\nssid="' + ssid +'"\n' + psk + '\n}'
   
   return network
