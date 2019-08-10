@@ -6,8 +6,8 @@ from utils import get_ssids, is_connected, check_cred, get_current_dir, create_n
 from shutil import copyfile
 
 from flask import Flask, request, send_from_directory, jsonify, render_template, redirect, url_for
-app = Flask(__name__, static_url_path='')
 
+app = Flask(__name__, static_url_path='')
 
 CURRENT_DIR = get_current_dir()
 
@@ -42,6 +42,10 @@ def main(message: str = None):
 @app.route('/ncsi.txt')
 def redirect204():
     return redirect(url_for(main))
+
+@app.route('/static/<path:path>')	
+def send_static(path):	
+    return send_from_directory('static', path)
 
 @app.route('/', methods=['POST'])
 def signin():
