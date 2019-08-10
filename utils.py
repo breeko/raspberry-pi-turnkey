@@ -7,11 +7,17 @@ import signal
 
 REMOTE_SERVER = "www.google.com"
 
-def get_ssids() -> List[str]:
-    """ Returns the available ssids """
+def get_ssids(num_attempts: int) -> List[str]:
+    """ Returns the available ssids. Since wlan services could be off, tries a number of times before returning an empty list"""
     ssid_list = []
-    get_ssid_list = subprocess.check_output(('iw', 'dev', 'wlan0', 'scan', 'ap-force'))
-    ssids = get_ssid_list.splitlines()
+    ssid_out = ""
+    for _ in range(num_attempts):
+      try:
+        ssid_out = subprocess.check_output(('iw', 'dev', 'wlan0', 'scan', 'ap-force'))
+        break
+      except subprocess.CalledProcessError:
+        time.sleep(1)
+    ssids = ssid_out.splitlines()
     for s in ssids:
         s = s.strip().decode('utf-8')
         if s.startswith("SSID"):
@@ -55,15 +61,14 @@ def get_current_dir() -> str:
   """ Returns current directory absolute path """
   return os.path.dirname(os.path.abspath(__file__))
 
-def stop_ap(stop: bool) -> None:
+def toggle_wlan_services(on: bool) -> None:
   """ Stops wlan0 services """
-  if stop:
+  if on:
+    print(subprocess.check_output(['systemctl', "restart", "dnsmasq", "dhcpcd"]))
+    print(subprocess.check_output(['systemctl', "restart", "hostapd"]))
+  else:
       # Services need to be stopped to free up wlan0 interface
       print(subprocess.check_output(['systemctl', "stop", "hostapd", "dnsmasq", "dhcpcd"]))
-  else:
-      print(subprocess.check_output(['systemctl', "restart", "dnsmasq", "dhcpcd"]))
-      time.sleep(2)
-      print(subprocess.check_output(['systemctl', "restart", "hostapd"]))
 
 def check_cred(ssid: str, password: str) -> bool:
   '''Validates ssid and password and returns True if valid and False if not valid'''
@@ -87,7 +92,7 @@ def check_cred(ssid: str, password: str) -> bool:
   with open(testconf, 'w') as f:
       f.write(result.decode('utf-8'))
 
-  stop_ap(True)
+  toggle_wlan_services(on = False)
 
   result = subprocess.check_output(['wpa_supplicant',
                                     "-Dnl80211",
@@ -105,7 +110,7 @@ def check_cred(ssid: str, password: str) -> bool:
       pid = int(pid.strip())
       os.kill(pid, signal.SIGTERM)
 
-  stop_ap(False) # Restart services
+  toggle_wlan_services(on = True) # Restart services
   print("ssid: {} password: {} valid: {}".format(ssid, password, valid_psk))
   return valid_psk
 

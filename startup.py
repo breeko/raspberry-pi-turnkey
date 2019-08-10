@@ -33,7 +33,7 @@ update_config=1
 @app.route('/')
 def main(message: str = None):
     message = message or "Configure your device by providing network information below"
-    ssids = get_ssids()
+    ssids = get_ssids(num_attempts = 15)
     return render_template('index.html', ssids=ssids, message=message)
 
 # Captive portal when connected with iOS or Android
