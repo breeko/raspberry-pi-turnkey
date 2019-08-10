@@ -5,4 +5,6 @@ sudo cp config/hostapd /etc/default/hostapd
 sudo cp config/dhcpcd.conf /etc/dhcpcd.conf
 sudo cp config/dnsmasq.conf /etc/dnsmasq.conf
 
-echo "Restart required"
+systemctl daemon-reload
+
+# Restart required?
