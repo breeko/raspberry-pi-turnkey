@@ -33,8 +33,8 @@ update_config=1
 @app.route('/')
 def main(message: str = None):
     ssids = get_ssids(num_attempts = 15)
-    if is_connected():
-        network = get_connected_network()
+    network = get_connected_network()
+    if network:
         ip_prefix = get_ip_prefix()
         ip_suffix = get_ip_suffix()
         return render_template('connected.html', message = message, network=network, ip_prefix=ip_prefix, ip_suffix=ip_suffix)
@@ -101,7 +101,8 @@ if __name__ == "__main__":
     copy_wpa_conf()
 
     # TODO: Remove True
-    if True or not is_connected():
+
+    if True or not is_connected(include_shared=False):
         app.run(host="0.0.0.0", port=80, threaded=True, debug=True)
     else:
         subprocess.Popen(STARTUP_SCRIPT)

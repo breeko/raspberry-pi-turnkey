@@ -30,18 +30,24 @@ def get_ssids(num_attempts: int) -> List[str]:
     ssid_list = sorted(list(set(ssid_list)))
     return ssid_list
 
-def is_connected() -> bool:
-  """ Returns True if connected to internet, else False """
-  try:
-    # see if we can resolve the host name -- tells us if there is a DNS listening
-    host = socket.gethostbyname(REMOTE_SERVER)
-    # connect to the host -- tells us if the host is actually reachable
-    s = socket.create_connection((host, 80), 2)
-    s.close()
-    return True
-  except:
-     pass
-  return False
+def is_connected(include_shared) -> bool:
+  """ Returns True if connected to internet, else False
+    args:
+      include_shared (bool) -> returns True if connection shared through USB
+  """
+  if not include_shared:
+    network = get_connected_network()
+    return network != ""
+  else:
+    try:
+      # see if we can resolve the host name -- tells us if there is a DNS listening
+      host = socket.gethostbyname(REMOTE_SERVER)
+      # connect to the host -- tells us if the host is actually reachable
+      s = socket.create_connection((host, 80), 2)
+      s.close()
+      return True
+    except:
+      return False
 
 def monitor_output(path:str, success: str, failure: str, timeout: float) -> bool:
   """ Monitors the contents of a file looking for success or failure string.
