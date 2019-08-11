@@ -146,15 +146,15 @@ def get_ip() -> str:
   cmd = "ifconfig wlan0 | grep -Po '(?<=inet ){}' | head -1".format(IP_REGEX)
   return subprocess.getoutput(cmd)
 
-def get_ip_prefix() -> str:
-  ip = get_ip()
-  prefix = ip.split(".")[-1]
-  return prefix
-
 def get_ip_suffix() -> str:
   ip = get_ip()
-  suffix = ".".join(ip.split(".")[:-1]) + "."
+  suffix = ip.split(".")[-1]
   return suffix
+
+def get_ip_prefix() -> str:
+  ip = get_ip()
+  prefix = ".".join(ip.split(".")[:-1]) + "."
+  return prefix
 
 def get_connected_network() -> str:
   cmd = "iwgetid | grep -Po '(?<=ESSID:\").+(?=\"$)' | head -1"
