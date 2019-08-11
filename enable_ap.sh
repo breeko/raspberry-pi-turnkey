@@ -6,5 +6,3 @@ sudo cp config/dhcpcd.conf /etc/dhcpcd.conf
 sudo cp config/dnsmasq.conf /etc/dnsmasq.conf
 
 systemctl daemon-reload
-
-# Restart required?

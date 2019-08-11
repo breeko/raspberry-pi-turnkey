@@ -1,7 +1,7 @@
 import subprocess
 
 import os
-from utils import get_ssids, is_connected, check_cred, get_current_dir, create_network, restart_device
+from utils import *
 
 from shutil import copyfile
 
@@ -32,9 +32,14 @@ update_config=1
 
 @app.route('/')
 def main(message: str = None):
-    message = message or "Configure your device by providing network information below"
     ssids = get_ssids(num_attempts = 15)
-    return render_template('index.html', ssids=ssids, message=message)
+    if is_connected():
+        network = get_connected_network()
+        ip_prefix = get_ip_prefix()
+        ip_suffix = get_ip_suffix()
+        return render_template('connected.html', message = message, network=network, ip_prefix=ip_prefix, ip_suffix=ip_suffix)
+    else:
+        return render_template('signin.html', ssids=ssids, message=message)
 
 # Captive portal when connected with iOS or Android
 @app.route('/generate_204')
@@ -54,6 +59,11 @@ def signin():
         return restart_device(disable=True)
     elif button_clicked == "signin":
         return attempt_signin()
+    elif button_clicked == "setip":
+        ip_prefix = get_ip_prefix()
+        ip_suffix = request.form['input_ip_suffix']
+        ip = ip_prefix + ip_suffix
+        return main("Static IP set to {}".format(ip))
 
 def attempt_signin():
     ssid = request.form['ssid']
@@ -70,7 +80,7 @@ def attempt_signin():
     
     copyfile(TEMP_WPA_CONF_PATH, WPA_CONF_PATH)
 
-    return main("Success! Click restart to connect.")
+    return main("Success! Connected.")
 
 def is_wpa_setup() -> bool:
     """ Returns True if it is an initial run """
@@ -92,6 +102,6 @@ if __name__ == "__main__":
 
     # TODO: Remove True
     if True or not is_connected():
-        app.run(host="0.0.0.0", port=80, threaded=True)
+        app.run(host="0.0.0.0", port=80, threaded=True, debug=True)
     else:
         subprocess.Popen(STARTUP_SCRIPT)

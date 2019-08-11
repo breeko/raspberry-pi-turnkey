@@ -6,6 +6,7 @@ import os
 import signal
 
 REMOTE_SERVER = "www.google.com"
+IP_REGEX = "[0-9]{3}.[0-9]{3}.[0-9]{1,3}.[0-9]{1,3}"
 
 def get_ssids(num_attempts: int) -> List[str]:
     """ Returns the available ssids. Since wlan services could be off, tries a number of times before returning an empty list"""
@@ -122,12 +123,33 @@ def create_network(ssid: str, password: str) -> str:
 
   return network
 
-def create_static_ip(ip: str) -> str:
-  return 'interface wlan0\n\nstatic ip_address={}/24\nstatic routers=192.168.0.1\nstatic domain_name_servers=192.168.0.1'.format(ip)
-
 def restart_device(disable: bool) -> None:
   if disable:
     subprocess.Popen(["./disable_ap.sh"])
   subprocess.run(["sudo", "restart", "now"])
+
   
-# ip r | grep -Po '(?<=default via )[0-9]{3}.[0-9]{3}.[0-9]{1,3}.[0-9]{1,3}' | head -1
+def create_static_ip(ip: str, router_ip: str) -> str:
+  return 'interface wlan0\n\nstatic ip_address={}/24\nstatic routers={}\nstatic domain_name_servers={}\n'.format(ip, router_ip, router_ip)
+
+def get_gateway_ip() -> str:
+  cmd = "ip r | grep -Po '(?<=default via ){}' | head -1".format(IP_REGEX)
+  return subprocess.getoutput(cmd)
+
+def get_ip() -> str:
+  cmd = "ifconfig wlan0 | grep -Po '(?<=inet ){}' | head -1".format(IP_REGEX)
+  return subprocess.getoutput(cmd)
+
+def get_ip_prefix() -> str:
+  ip = get_ip()
+  prefix = ip.split(".")[-1]
+  return prefix
+
+def get_ip_suffix() -> str:
+  ip = get_ip()
+  suffix = ".".join(ip.split(".")[:-1]) + "."
+  return suffix
+
+def get_connected_network() -> str:
+  cmd = "iwgetid | grep -Po '(?<=ESSID:\").+(?=\"$)' | head -1"
+  return subprocess.getoutput(cmd)

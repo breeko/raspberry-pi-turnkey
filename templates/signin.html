@@ -20,12 +20,11 @@
     <form class="form-signin" action="/" method="POST">
       <div class="text-center mb-4">
        <h1 class="h3 mb-3 font-weight-normal">Sign in</h1>
-        {% if message %}<p>{{ message|safe }}</p>{% endif %}
+        {% if message %}<p>{{ message }}</p>{% endif %}
       </div>
 
-
       <div class="form-group">
-        <label for="inputSSID">SSID</label>
+        <label for="inputSSID">Networks Available</label>
         <select class="form-control" id="inputSSID" name="ssid">
           {% for s in ssids %}
           <option>{{ s }}</option>
@@ -39,6 +38,6 @@
       </div>
 
       <button class="btn btn-lg btn-primary btn-block" type="submit" name="submit" value="signin">Sign in</button>
-      <button class="btn btn-lg btn-primary btn-block" type="submit" name="submit" value="restart">Restart Device</button>
+      <button class="btn btn-lg btn-danger btn-block" type="submit" name="submit" value="restart">Restart Device</button>
     </form>
   </body>
