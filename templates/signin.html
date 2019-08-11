@@ -33,7 +33,16 @@
       </div>
 
       <div class="form-label-group">
-        <input id="inputPassword" autocorrect="off" autocapitalize="none" pattern=".{0}|.{8,63}" name="password" class="form-control" placeholder="SSID Password" type="password" required>
+        <input id="inputPassword"
+          autocorrect="off"
+          autocapitalize="none"
+          pattern=".{0}|.{8,64}"
+          name="password"
+          class="form-control"
+          placeholder="SSID Password"
+          type="password"
+          title="Password must be between 8 and 64 characters long."
+          required>
         <label for="inputPassword">Password</label>
       </div>
 
