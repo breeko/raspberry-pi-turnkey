@@ -79,7 +79,8 @@ def attempt_signin():
         f.write(network)
     
     copyfile(TEMP_WPA_CONF_PATH, WPA_CONF_PATH)
-
+    subprocess.run(["./connect.sh"])
+    
     return main("Success! Connected.")
 
 def is_wpa_setup() -> bool:
