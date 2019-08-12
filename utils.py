@@ -129,7 +129,7 @@ def create_network(ssid: str, password: str) -> str:
 def restart_device(disable: bool) -> None:
   if disable:
     subprocess.Popen(["./disable_ap.sh"])
-  subprocess.run(["sudo", "restart", "now"])
+  subprocess.run(["sudo", "reboot"])
 
 def get_router_ip() -> str:
   """ Returns the ip of the router """
