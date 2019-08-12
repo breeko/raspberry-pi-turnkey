@@ -1,11 +1,11 @@
 import subprocess
+import re
 from typing import List
 import socket
 import time
 import os
 import signal
 
-REMOTE_SERVER = "www.google.com"
 IP_REGEX = "[0-9]{3}.[0-9]{3}.[0-9]{1,3}.[0-9]{1,3}"
 
 def get_ssids(num_attempts: int) -> List[str]:
@@ -35,13 +35,14 @@ def is_connected(include_shared) -> bool:
     args:
       include_shared (bool) -> returns True if connection shared through USB
   """
+  google = "www.google.com"
   if not include_shared:
     network = get_connected_network()
     return network != ""
   else:
     try:
       # see if we can resolve the host name -- tells us if there is a DNS listening
-      host = socket.gethostbyname(REMOTE_SERVER)
+      host = socket.gethostbyname(google)
       # connect to the host -- tells us if the host is actually reachable
       s = socket.create_connection((host, 80), 2)
       s.close()
@@ -63,10 +64,6 @@ def monitor_output(path:str, success: str, failure: str, timeout: float) -> bool
         return False
       elif now - start > timeout:
         return False
-
-def get_current_dir() -> str:
-  """ Returns current directory absolute path """
-  return os.path.dirname(os.path.abspath(__file__))
 
 def toggle_wlan_services(on: bool) -> None:
   """ Stops wlan0 services """
@@ -134,28 +131,59 @@ def restart_device(disable: bool) -> None:
     subprocess.Popen(["./disable_ap.sh"])
   subprocess.run(["sudo", "restart", "now"])
 
-  
-def create_static_ip(ip: str, router_ip: str) -> str:
-  return 'interface wlan0\n\nstatic ip_address={}/24\nstatic routers={}\nstatic domain_name_servers={}\n'.format(ip, router_ip, router_ip)
-
-def get_gateway_ip() -> str:
+def get_router_ip() -> str:
+  """ Returns the ip of the router """
   cmd = "ip r | grep -Po '(?<=default via ){}' | head -1".format(IP_REGEX)
   return subprocess.getoutput(cmd)
 
 def get_ip() -> str:
+  """ Returns the internal ip of device"""
   cmd = "ifconfig wlan0 | grep -Po '(?<=inet ){}' | head -1".format(IP_REGEX)
   return subprocess.getoutput(cmd)
 
 def get_ip_suffix() -> str:
+  """ Returns the suffx of the internal ip (e.g. 192.168.1.16 -> 16 """
   ip = get_ip()
   suffix = ip.split(".")[-1]
   return suffix
 
 def get_ip_prefix() -> str:
+  """ Returns the prefix of the internal ip (e.g. 192.168.1.16 -> 192.168.1. """
   ip = get_ip()
   prefix = ".".join(ip.split(".")[:-1]) + "."
   return prefix
 
 def get_connected_network() -> str:
+  """ Returns the name of the connected network """
   cmd = "iwgetid | grep -Po '(?<=ESSID:\").+(?=\"$)' | head -1"
   return subprocess.getoutput(cmd)
+
+def clear_static_ip(path: str) -> None:
+  """ Clears any static ip from dhcpcd conf file """
+  static_ip_regex = r"^interface wlan0\n+static ip_address={}/24$".format(IP_REGEX)
+
+  with open(path, "r") as f:
+    out = f.read()
+    updated = re.sub(static_ip_regex, "", out, flags=re.MULTILINE)
+  
+  with open(path, "w") as f:
+    f.write(updated)
+
+def create_static_ip(path: str, ip: str, router_ip: str) -> None:
+  """ Creates a static ip string and inserts it its a dhcpcd conf """
+  static_ip = 'interface wlan0\n\nstatic ip_address={}/24\nstatic routers={}\nstatic domain_name_servers={}\n'.format(ip, router_ip, router_ip)
+  with open(path, "a+") as f:
+    f.write(static_ip)
+
+
+with open("dhcpcd-test.conf", "a") as f:
+  f.write("hi")
+
+def set_ip(path: str, ip_suffix: str) -> None:
+  router_ip = get_router_ip()
+  ip_prefix = get_ip_prefix()
+  ip = ip_prefix + ip_suffix
+  clear_static_ip(path = path)
+  create_static_ip(path = path, ip = ip, router_ip = router_ip)
+  subprocess.run(["./connect.sh"])
+  

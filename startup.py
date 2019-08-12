@@ -1,34 +1,14 @@
 import subprocess
 
 import os
-from utils import *
+from utils import * # pylint: disable=unused-wildcard-import
+from constants import *
 
 from shutil import copyfile
 
 from flask import Flask, request, send_from_directory, jsonify, render_template, redirect, url_for
 
 app = Flask(__name__, static_url_path='')
-
-CURRENT_DIR = get_current_dir()
-
-WPA_CONF_PATH = "/etc/wpa_supplicant/wpa_supplicant.conf"
-
-TEMP_WPA_CONF_PATH = "{}/wpa_supplicant.conf".format(CURRENT_DIR)
-
-STARTUP_SCRIPT = "./startup.sh"
-
-wpa_conf = """country=US
-ctrl_interface=DIR=/var/run/wpa_supplicant
-update_config=1
-network={
-    ssid="%s"
-    %s
-}"""
-
-wpa_conf_default = """country=US
-ctrl_interface=DIR=/var/run/wpa_supplicant
-update_config=1
-"""
 
 @app.route('/')
 def main(message: str = None):
@@ -60,9 +40,11 @@ def signin():
     elif button_clicked == "signin":
         return attempt_signin()
     elif button_clicked == "setip":
-        ip_prefix = get_ip_prefix()
         ip_suffix = request.form['input_ip_suffix']
+        ip_prefix = get_ip_prefix()
         ip = ip_prefix + ip_suffix
+  
+        set_ip(path = DHCPCD_CONF_PATH, ip_suffix = ip_suffix)
         return main("Static IP set to {}".format(ip))
 
 def attempt_signin():
@@ -80,7 +62,7 @@ def attempt_signin():
     
     copyfile(TEMP_WPA_CONF_PATH, WPA_CONF_PATH)
     subprocess.run(["./connect.sh"])
-    
+
     return main("Success! Connected.")
 
 def is_wpa_setup() -> bool:
@@ -88,6 +70,12 @@ def is_wpa_setup() -> bool:
     return not os.path.isfile(WPA_CONF_PATH)
 
 def setup_wpa_conf():
+
+    wpa_conf_default = """country=US
+        ctrl_interface=DIR=/var/run/wpa_supplicant
+        update_config=1
+        """
+
     with open(WPA_CONF_PATH, 'w') as f:
         f.write(wpa_conf_default)
 
@@ -102,7 +90,6 @@ if __name__ == "__main__":
     copy_wpa_conf()
 
     # TODO: Remove True
-
     if True or not is_connected(include_shared=False):
         app.run(host="0.0.0.0", port=80, threaded=True, debug=True)
     else:
