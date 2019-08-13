@@ -9,7 +9,7 @@ from shutil import copyfile
 
 from constants import WPA_CONF_PATH, TEMP_WPA_CONF_PATH, DHCPCD_CONF_PATH
 
-IP_REGEX = "[0-9]{3}.[0-9]{3}.[0-9]{1,3}.[0-9]{1,3}"
+IP_REGEX = "[0-9]{3}\.[0-9]{3}\.[0-9]{1,3}\.[0-9]{1,3}"
 
 def is_wpa_setup() -> bool:
   """ Returns True if wpa conf file already exists """
@@ -181,12 +181,10 @@ def get_connected_network() -> str:
 
 def clear_static_ip(path: str) -> None:
   """ Clears any static ip from dhcpcd conf file """
-  static_ip_regex = r"^interface wlan0\n+static ip_address={}/24$".format(IP_REGEX)
-
+  static_ip_regex = r"""^interface wlan0\n+static ip_address={ip}\/24\n+(static routers={ip})?\n+(static domain_name_servers={ip})?""".format(ip=IP_REGEX)
   with open(path, "r") as f:
     out = f.read()
     updated = re.sub(static_ip_regex, "", out, flags=re.MULTILINE)
-  
   with open(path, "w") as f:
     f.write(updated)
 
