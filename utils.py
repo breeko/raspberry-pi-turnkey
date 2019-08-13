@@ -8,6 +8,23 @@ import signal
 
 IP_REGEX = "[0-9]{3}.[0-9]{3}.[0-9]{1,3}.[0-9]{1,3}"
 
+def is_wpa_setup() -> bool:
+  """ Returns True if wpa conf file already exists """
+  return os.path.isfile(WPA_CONF_PATH)
+
+def setup_wpa_conf():
+
+  wpa_conf_default = """country=US
+      ctrl_interface=DIR=/var/run/wpa_supplicant
+      update_config=1
+      """
+
+  with open(WPA_CONF_PATH, 'w') as f:
+      f.write(wpa_conf_default)
+
+def copy_wpa_conf():
+  copyfile(WPA_CONF_PATH, TEMP_WPA_CONF_PATH)
+
 def get_ssids(num_attempts: int) -> List[str]:
     """ Returns the available ssids. Since wlan services could be off, tries a number of times before returning an empty list"""
     ssid_list = []
@@ -187,3 +204,14 @@ def set_ip(path: str, ip_suffix: str) -> None:
   create_static_ip(path = path, ip = ip, router_ip = router_ip)
   subprocess.run(["./connect.sh"])
   
+def reset_ip() -> None:
+  NET_DIR = '/sys/class/net'
+
+  subprocess.call(['sudo','systemctl','daemon-reload'])
+  subprocess.call(['sudo','systemctl','stop','dhcpcd.service'])
+
+  for net_dev in os.listdir(NET_DIR):
+    subprocess.call(['sudo','ip','addr','flush','dev',net_dev])
+
+  subprocess.call(['sudo','systemctl','start','dhcpcd.service'])
+  subprocess.call(['sudo','systemctl','restart','networking.service'])

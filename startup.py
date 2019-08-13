@@ -63,24 +63,7 @@ def attempt_signin():
     copyfile(TEMP_WPA_CONF_PATH, WPA_CONF_PATH)
     subprocess.run(["./connect.sh"])
 
-    return main("Success! Connected.")
-
-def is_wpa_setup() -> bool:
-    """ Returns True if it is an initial run """
-    return not os.path.isfile(WPA_CONF_PATH)
-
-def setup_wpa_conf():
-
-    wpa_conf_default = """country=US
-        ctrl_interface=DIR=/var/run/wpa_supplicant
-        update_config=1
-        """
-
-    with open(WPA_CONF_PATH, 'w') as f:
-        f.write(wpa_conf_default)
-
-def copy_wpa_conf():
-    copyfile(WPA_CONF_PATH, TEMP_WPA_CONF_PATH)
+    return main("Success!")
 
 if __name__ == "__main__":
     # things to run the first time it boots
