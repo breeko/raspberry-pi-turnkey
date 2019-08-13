@@ -45,6 +45,7 @@ def signin():
         ip = ip_prefix + ip_suffix
   
         set_ip(path = DHCPCD_CONF_PATH, ip_suffix = ip_suffix)
+        reset_ip()
         return main("Static IP set to {}".format(ip))
 
 def attempt_signin():
