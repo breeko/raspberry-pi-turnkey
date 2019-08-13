@@ -7,7 +7,7 @@ import os
 import signal
 from shutil import copyfile
 
-from constants import WPA_CONF_PATH, TEMP_WPA_CONF_PATH
+from constants import WPA_CONF_PATH, TEMP_WPA_CONF_PATH, DHCPCD_CONF_PATH
 
 IP_REGEX = "[0-9]{3}.[0-9]{3}.[0-9]{1,3}.[0-9]{1,3}"
 
@@ -16,8 +16,7 @@ def is_wpa_setup() -> bool:
   return os.path.isfile(WPA_CONF_PATH)
 
 def setup_wpa_conf():
-  print("setting up wpa conf...")
-
+  """ Creates a blank wpa_supplicant file """
   wpa_conf_default = """country=US
       ctrl_interface=DIR=/var/run/wpa_supplicant
       update_config=1
@@ -27,7 +26,8 @@ def setup_wpa_conf():
       f.write(wpa_conf_default)
 
 def copy_wpa_conf():
-  copyfile(WPA_CONF_PATH, TEMP_WPA_CONF_PATH)
+  """ Copies the temporary WPA file to its final location """
+  copyfile(TEMP_WPA_CONF_PATH, WPA_CONF_PATH)
 
 def get_ssids(num_attempts: int) -> List[str]:
     """ Returns the available ssids. Since wlan services could be off, tries a number of times before returning an empty list"""
@@ -96,7 +96,7 @@ def toggle_wlan_services(on: bool) -> None:
       print(subprocess.check_output(['systemctl', "stop", "hostapd", "dnsmasq", "dhcpcd"]))
 
 def check_cred(ssid: str, password: str) -> bool:
-  '''Validates ssid and password and returns True if valid and False if not valid'''
+  """ Validates ssid and password and returns True if valid and False if not valid """
   if len(password) < 8 or len(password) > 63:
     return False
 
@@ -140,6 +140,7 @@ def check_cred(ssid: str, password: str) -> bool:
   return valid_psk
 
 def create_network(ssid: str, password: str) -> str:
+  """ Creates the text needed to add a network wpa_supplicant.conf """
   if password == "":
     network = 'network={\n\tssid="' + ssid +'"\n\tkey_mgmt=NONE\n}'
   else:
@@ -147,9 +148,8 @@ def create_network(ssid: str, password: str) -> str:
 
   return network
 
-def restart_device(disable: bool) -> None:
-  if disable:
-    subprocess.Popen(["./disable_ap.sh"])
+def restart_device() -> None:
+  """ Restarts the device """
   subprocess.run(["sudo", "reboot"])
 
 def get_router_ip() -> str:
@@ -196,12 +196,12 @@ def create_static_ip(path: str, ip: str, router_ip: str) -> None:
   with open(path, "a+") as f:
     f.write(static_ip)
 
-def set_ip(path: str, ip_suffix: str) -> None:
+def set_ip(ip_suffix: str) -> None:
   router_ip = get_router_ip()
   ip_prefix = get_ip_prefix()
   ip = ip_prefix + ip_suffix
-  clear_static_ip(path = path)
-  create_static_ip(path = path, ip = ip, router_ip = router_ip)
+  clear_static_ip(path = DHCPCD_CONF_PATH)
+  create_static_ip(path = DHCPCD_CONF_PATH, ip = ip, router_ip = router_ip)
   
 def reset_ip() -> None:
   NET_DIR = '/sys/class/net'

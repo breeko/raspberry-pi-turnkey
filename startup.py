@@ -2,7 +2,7 @@ import subprocess
 
 import os
 from utils import * # pylint: disable=unused-wildcard-import
-from constants import *
+from constants import STARTUP_SCRIPT
 
 from shutil import copyfile
 
@@ -21,7 +21,6 @@ def main(message: str = None):
     else:
         return render_template('signin.html', ssids=ssids, message=message)
 
-# Captive portal when connected with iOS or Android
 @app.route('/generate_204')
 @app.route('/hotspot-detect.html')
 @app.route('/ncsi.txt')
@@ -34,17 +33,16 @@ def send_static(path):
 
 @app.route('/', methods=['POST'])
 def signin():
-    button_clicked = request.form.get("submit")
+    button_clicked = request.form.get("submit") or request.form.get("button")
     if button_clicked == "restart":
-        return restart_device(disable=True)
+        return restart_device()
     elif button_clicked == "signin":
         return attempt_signin()
     elif button_clicked == "setip":
         ip_suffix = request.form['input_ip_suffix']
         ip_prefix = get_ip_prefix()
         ip = ip_prefix + ip_suffix
-  
-        set_ip(path = DHCPCD_CONF_PATH, ip_suffix = ip_suffix)
+        set_ip(ip_suffix = ip_suffix)
         reset_ip()
         return main("Static IP set to {}".format(ip))
 
@@ -61,7 +59,7 @@ def attempt_signin():
         network = create_network(ssid = ssid, password = password)
         f.write(network)
     
-    copyfile(TEMP_WPA_CONF_PATH, WPA_CONF_PATH)
+    copy_wpa_conf()
     subprocess.run(["./connect.sh"])
 
     return main("Success!")
