@@ -196,10 +196,6 @@ def create_static_ip(path: str, ip: str, router_ip: str) -> None:
   with open(path, "a+") as f:
     f.write(static_ip)
 
-
-with open("dhcpcd-test.conf", "a") as f:
-  f.write("hi")
-
 def set_ip(path: str, ip_suffix: str) -> None:
   router_ip = get_router_ip()
   ip_prefix = get_ip_prefix()
