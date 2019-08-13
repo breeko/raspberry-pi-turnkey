@@ -16,6 +16,7 @@ def is_wpa_setup() -> bool:
   return os.path.isfile(WPA_CONF_PATH)
 
 def setup_wpa_conf():
+  print("setting up wpa conf...")
 
   wpa_conf_default = """country=US
       ctrl_interface=DIR=/var/run/wpa_supplicant
@@ -205,7 +206,6 @@ def set_ip(path: str, ip_suffix: str) -> None:
   ip = ip_prefix + ip_suffix
   clear_static_ip(path = path)
   create_static_ip(path = path, ip = ip, router_ip = router_ip)
-  subprocess.run(["./connect.sh"])
   
 def reset_ip() -> None:
   NET_DIR = '/sys/class/net'
