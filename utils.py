@@ -5,6 +5,9 @@ import socket
 import time
 import os
 import signal
+from shutil import copyfile
+
+from constants import WPA_CONF_PATH, TEMP_WPA_CONF_PATH
 
 IP_REGEX = "[0-9]{3}.[0-9]{3}.[0-9]{1,3}.[0-9]{1,3}"
 
