@@ -2,6 +2,9 @@ import subprocess
 
 import os
 from utils import * # pylint: disable=unused-wildcard-import
+from connection_utils import * # pylint: disable=unused-wildcard-import
+from wpa_utils import * # pylint: disable=unused-wildcard-import
+
 from constants import STARTUP_SCRIPT
 
 from shutil import copyfile
@@ -69,10 +72,14 @@ if __name__ == "__main__":
     if not is_wpa_setup():
         setup_wpa_conf()
 
-    copy_wpa_conf()
-
     # TODO: Remove True
     if True or not is_connected(include_shared=False):
+        if not is_enabled():
+            enable_app()
+            restart_device()
         app.run(host="0.0.0.0", port=80, threaded=True, debug=True)
     else:
+        if is_enabled():
+            disable_app()
+            restart_device()
         subprocess.Popen(STARTUP_SCRIPT)
