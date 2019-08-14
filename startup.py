@@ -58,11 +58,10 @@ def attempt_signin():
     if not valid_psk:
         return main("Incorrect password.")
 
-    with open(TEMP_WPA_CONF_PATH, 'a') as f:
+    with open(WPA_CONF_PATH, 'a') as f:
         network = create_network(ssid = ssid, password = password)
         f.write(network)
-    
-    copy_wpa_conf()
+
     subprocess.run(["./connect.sh"])
 
     return main("Success!")
@@ -77,9 +76,11 @@ if __name__ == "__main__":
         if not is_enabled():
             enable_app()
             restart_device()
-        app.run(host="0.0.0.0", port=80, threaded=True, debug=True)
+        else:
+            app.run(host="0.0.0.0", port=80, threaded=True, debug=True)
     else:
         if is_enabled():
             disable_app()
             restart_device()
-        subprocess.Popen(STARTUP_SCRIPT)
+        else:
+            subprocess.Popen(STARTUP_SCRIPT)

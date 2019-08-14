@@ -24,6 +24,7 @@ def monitor_output(path:str, success: str, failure: str, timeout: float) -> bool
 
 def restart_device() -> None:
   """ Restarts the device """
+  print("Restarting...")
   subprocess.run(["sudo", "reboot"])
 
 def enable_app() -> None:
