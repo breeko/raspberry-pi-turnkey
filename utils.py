@@ -46,8 +46,8 @@ def disable_app() -> None:
   subprocess.run(["systemctl", "daemon-reload"])
 
 def is_enabled() -> bool:
-  all_same = filecmp.cmp("config/hostapd.disabled", "/etc/default/hostapd") and \
-    filecmp.cmp("config/dhcpcd.conf.disabled", "/etc/dhcpcd.conf") and \
-    filecmp.cmp("config/dnsmasq.conf.disabled", "/etc/dnsmasq.conf")
+  all_same = filecmp.cmp("config/hostapd", "/etc/default/hostapd") and \
+    filecmp.cmp("config/dhcpcd.conf", "/etc/dhcpcd.conf") and \
+    filecmp.cmp("config/dnsmasq.conf", "/etc/dnsmasq.conf")
   
   return all_same
