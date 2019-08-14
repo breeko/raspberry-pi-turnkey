@@ -6,10 +6,9 @@ import re
 import subprocess
 
 from shutil import copyfile
-from utils import IP_REGEX
+from constants import IP_REGEX
 
-from connection_utils import get_router_ip, get_ip_prefix
-from constants import WPA_CONF_PATH, DHCPCD_CONF_PATH
+from constants import WPA_CONF_PATH, DHCPCD_CONF_PATH, IP_REGEX
 
 def is_wpa_setup() -> bool:
     """ Returns True if wpa conf file already exists """
@@ -63,3 +62,24 @@ def create_network(ssid: str, password: str) -> str:
 
     return network
   
+def get_router_ip() -> str:
+    """ Returns the ip of the router """
+    cmd = "ip r | grep -Po '(?<=default via ){}' | head -1".format(IP_REGEX)
+    return subprocess.getoutput(cmd)
+  
+def get_ip() -> str:
+    """ Returns the internal ip of device"""
+    cmd = "ifconfig wlan0 | grep -Po '(?<=inet ){}' | head -1".format(IP_REGEX)
+    return subprocess.getoutput(cmd)
+  
+def get_ip_suffix() -> str:
+    """ Returns the suffx of the internal ip (e.g. 192.168.1.16 -> 16 """
+    ip = get_ip()
+    suffix = ip.split(".")[-1]
+    return suffix
+  
+def get_ip_prefix() -> str:
+    """ Returns the prefix of the internal ip (e.g. 192.168.1.16 -> 192.168.1. """
+    ip = get_ip()
+    prefix = ".".join(ip.split(".")[:-1]) + "."
+    return prefix

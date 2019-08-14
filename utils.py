@@ -7,8 +7,6 @@ import time
 import filecmp
 from shutil import copyfile
 
-IP_REGEX = r"[0-9]{3}\.[0-9]{3}\.[0-9]{1,3}\.[0-9]{1,3}"
-
 def monitor_output(path:str, success: str, failure: str, timeout: float) -> bool:
   """ Monitors the contents of a file looking for success or failure string.
   Returns True if success found, False if failure found or timeout"""

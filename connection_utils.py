@@ -8,7 +8,7 @@ import os
 import signal
 
 from typing import List
-from utils import monitor_output, IP_REGEX
+from utils import monitor_output
 from wpa_utils import toggle_wlan_services
 
 def get_ssids(num_attempts: int) -> List[str]:
@@ -96,27 +96,7 @@ def check_cred(ssid: str, password: str) -> bool:
     toggle_wlan_services(on = True) # Restart services
     print("ssid: {} password: {} valid: {}".format(ssid, password, valid_psk))
     return valid_psk
-def get_router_ip() -> str:
-    """ Returns the ip of the router """
-    cmd = "ip r | grep -Po '(?<=default via ){}' | head -1".format(IP_REGEX)
-    return subprocess.getoutput(cmd)
-  
-def get_ip() -> str:
-    """ Returns the internal ip of device"""
-    cmd = "ifconfig wlan0 | grep -Po '(?<=inet ){}' | head -1".format(IP_REGEX)
-    return subprocess.getoutput(cmd)
-  
-def get_ip_suffix() -> str:
-    """ Returns the suffx of the internal ip (e.g. 192.168.1.16 -> 16 """
-    ip = get_ip()
-    suffix = ip.split(".")[-1]
-    return suffix
-  
-def get_ip_prefix() -> str:
-    """ Returns the prefix of the internal ip (e.g. 192.168.1.16 -> 192.168.1. """
-    ip = get_ip()
-    prefix = ".".join(ip.split(".")[:-1]) + "."
-    return prefix
+
   
 def get_connected_network() -> str:
     """ Returns the name of the connected network """
