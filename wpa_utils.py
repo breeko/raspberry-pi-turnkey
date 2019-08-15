@@ -18,7 +18,7 @@ def setup_wpa_conf():
     """ Creates a blank wpa_supplicant file """
     wpa_conf_default = """country=US\nctrl_interface=DIR=/var/run/wpa_supplicant\nupdate_config=1"""
   
-    with open(WPA_CONF_PATH, 'w') as f:
+    with open(WPA_CONF_PATH, "w") as f:
         f.write(wpa_conf_default)
 
 def clear_static_ip(path: str) -> None:

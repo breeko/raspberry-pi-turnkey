@@ -52,6 +52,8 @@ def click():
         set_ip(ip_suffix = ip_suffix)
         reset_ip()
         return main("Static IP set to {}".format(ip))
+    else:
+        return main()
 
 def attempt_signin():
     ssid = request.form['ssid']
