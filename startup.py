@@ -20,9 +20,9 @@ def main(message: str = None):
     if network:
         ip_prefix = get_ip_prefix()
         ip_suffix = get_ip_suffix()
-        return render_template('connected.html', message = message, network=network, ip_prefix=ip_prefix, ip_suffix=ip_suffix)
+        return render_template('connected.html', restart=restart_device, message = message, network=network, ip_prefix=ip_prefix, ip_suffix=ip_suffix)
     else:
-        return render_template('signin.html', ssids=ssids, message=message)
+        return render_template('signin.html', restart=restart_device, ssids=ssids, message=message)
 
 @app.route('/generate_204')
 @app.route('/hotspot-detect.html')
@@ -30,16 +30,20 @@ def main(message: str = None):
 def redirect204():
     return redirect(url_for(main))
 
-@app.route('/static/<path:path>')	
-def send_static(path):	
+@app.route('/static/<path:path>')
+def send_static(path):
     return send_from_directory('static', path)
 
+@app.route('/restart', methods=['GET'])
+def restart():
+    restart_device()
+    return(main("Restarting..."))
+
 @app.route('/', methods=['POST'])
-def signin():
-    button_clicked = request.form.get("submit") or request.form.get("button")
-    if button_clicked == "restart":
-        return restart_device()
-    elif button_clicked == "signin":
+def click():
+    button_clicked = request.form.get("submit")
+    print(request.form)
+    if button_clicked == "signin":
         return attempt_signin()
     elif button_clicked == "setip":
         ip_suffix = request.form['input_ip_suffix']
@@ -54,7 +58,6 @@ def attempt_signin():
     password = request.form['password']
 
     valid_psk = check_cred(ssid, password)
-    
     if not valid_psk:
         return main("Incorrect password.")
 
@@ -74,13 +77,15 @@ if __name__ == "__main__":
     # TODO: Remove True
     if True or not is_connected(include_shared=False):
         if not is_enabled():
-            enable_app()
-            restart_device()
+            # enable_app()
+            # restart_device()
+            print("NO ENABLED :-(")
         else:
             app.run(host="0.0.0.0", port=80, threaded=True, debug=True)
     else:
         if is_enabled():
-            disable_app()
-            restart_device()
+            #disable_app()
+            print("how did we get here???")
+            #restart_device()
         else:
             subprocess.Popen(STARTUP_SCRIPT)
