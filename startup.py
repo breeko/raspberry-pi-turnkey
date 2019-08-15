@@ -65,7 +65,7 @@ def attempt_signin():
         network = create_network(ssid = ssid, password = password)
         f.write(network)
 
-    subprocess.run(["./connect.sh"])
+    connect()
 
     return main("Success!")
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     else:
         if is_enabled():
             #disable_app()
-            print("how did we get here???")
             #restart_device()
+            print("how did we get here???")
         else:
             subprocess.Popen(STARTUP_SCRIPT)

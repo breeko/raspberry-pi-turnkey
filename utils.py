@@ -46,8 +46,16 @@ def disable_app() -> None:
   subprocess.run(["systemctl", "daemon-reload"])
 
 def is_enabled() -> bool:
+  """ Returns if the app is enabled based on its config files """
   all_same = filecmp.cmp("config/hostapd", "/etc/default/hostapd") and \
     filecmp.cmp("config/dhcpcd.conf", "/etc/dhcpcd.conf") and \
     filecmp.cmp("config/dnsmasq.conf", "/etc/dnsmasq.conf")
-  
   return all_same
+
+def connect() -> None:
+  """ Connects to wifi without restarting
+  
+  https://raspberrypi.stackexchange.com/questions/73749/how-to-connect-to-wifi-without-reboot
+  """
+  subprocess.run(["systemctl", "daemon-reload"])
+  subprocess.run(["systemctl", "restart", "dhcpcd"])
