@@ -77,15 +77,13 @@ if __name__ == "__main__":
     # TODO: Remove True
     if True or not is_connected(include_shared=False):
         if not is_enabled():
-            # enable_app()
-            # restart_device()
-            print("NO ENABLED :-(")
+            enable_app()
+            restart_device()
         else:
             app.run(host="0.0.0.0", port=80, threaded=True, debug=True)
     else:
         if is_enabled():
-            #disable_app()
-            #restart_device()
-            print("how did we get here???")
+            disable_app()
+            restart_device()
         else:
             subprocess.Popen(STARTUP_SCRIPT)
